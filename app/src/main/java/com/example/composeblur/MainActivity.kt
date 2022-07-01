@@ -8,8 +8,8 @@ import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -31,8 +31,8 @@ class MainActivity : ComponentActivity() {
                 Text("Hello world")
                 AndroidView(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
+                        .width(300.dp)
+                        .height(200.dp),
                     factory = ::SomeView
                 )
             }
@@ -41,21 +41,27 @@ class MainActivity : ComponentActivity() {
 }
 
 class SomeView(context: Context) : FrameLayout(context) {
-    private val internalCanvas = Canvas(Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888))
+    val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
+    private val internalCanvas = Canvas(bitmap)
 
     init {
         setWillNotDraw(false)
+
+        viewTreeObserver.addOnPreDrawListener {
+            rootView.draw(internalCanvas)
+            true
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
         // Check to avoid recursive drawing
         if (canvas != internalCanvas) {
             super.onDraw(canvas)
-
-            // FIXME: Triggers RenderNodeLayer.updateDisplayList, even though it's a software canvas.
-            //  Bug?
-            //  java.lang.IllegalStateException: Recording currently in progress - missing #endRecording() call?
-            rootView.draw(internalCanvas)
+            canvas.save()
+            canvas.rotate(45f)
+            canvas.translate(200f, 0f)
+            canvas.drawBitmap(bitmap, 0f, 0f, null)
+            canvas.restore()
         }
     }
 }
